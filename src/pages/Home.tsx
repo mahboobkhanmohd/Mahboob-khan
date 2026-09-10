@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import { ShieldAlert, ChevronDown, AlertCircle, RotateCw } from 'lucide-react';
+import {
+  ShieldAlert,
+  ChevronDown,
+  AlertCircle,
+  RotateCw,
+  Users,
+  HardHat,
+  Sprout,
+  UserRound,
+  Baby,
+  Dumbbell,
+  Sparkles,
+} from 'lucide-react';
 import { CityHeatInfo } from '../types/heat';
 import { LocationSearchModal } from '../components/LocationSearchModal';
 import { TodaysHeat } from '../components/TodaysHeat';
@@ -7,6 +19,9 @@ import { BestTimeToGoOutside } from '../components/BestTimeToGoOutside';
 import { HeatwaveAlertBanner } from '../components/HeatwaveAlertBanner';
 import { detectHeatwave } from '../utils/heatwaveDetection';
 import { WeatherData, computeHeatRiskVerdict } from '../services/weatherService';
+import { explainHeatRisk } from '../services/riskExplanationService';
+
+type Profile = 'general' | 'worker' | 'farmer' | 'elderly' | 'child' | 'athlete';
 
 interface HomeProps {
   selectedCity: CityHeatInfo;
@@ -33,6 +48,32 @@ export const Home: React.FC<HomeProps> = ({
 }) => {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [showWhy, setShowWhy] = useState(false);
+  const [profile, setProfile] = useState<Profile>('general');
+  const [riskExplanation, setRiskExplanation] = useState<string | null>(null);
+  const [isExplainingRisk, setIsExplainingRisk] = useState(false);
+  const [explanationError, setExplanationError] = useState<string | null>(null);
+
+  const profileOptions: {
+    id: Profile;
+    label: string;
+    Icon: typeof Users;
+  }[] = [
+    { id: 'general', label: 'Everyone', Icon: Users },
+    { id: 'worker', label: 'Outdoor Worker', Icon: HardHat },
+    { id: 'farmer', label: 'Farmer', Icon: Sprout },
+    { id: 'elderly', label: 'Elderly', Icon: UserRound },
+    { id: 'child', label: 'Child', Icon: Baby },
+    { id: 'athlete', label: 'Athlete', Icon: Dumbbell },
+  ];
+
+  const profileAdvice: Record<Profile, string[]> = {
+    general: ['Stay hydrated and avoid prolonged afternoon exposure.'],
+    worker: ['Take regular breaks in shade.', 'Avoid unnecessary work during peak heat.'],
+    farmer: ['Plan heavy work for cooler hours.', 'Take regular breaks in shade.'],
+    elderly: ['Stay hydrated and avoid prolonged afternoon exposure.', 'Rest in a cool place during peak heat.'],
+    child: ['Keep outdoor play to cooler hours.', 'Offer water regularly.'],
+    athlete: ['Consider exercising during cooler hours.', 'Take breaks and drink water regularly.'],
+  };
 
   // Weather values: prioritizes real weather data, with city fallback
   const currentTemp = weatherData ? weatherData.temperature : selectedCity.currentTemp;
@@ -51,6 +92,29 @@ export const Home: React.FC<HomeProps> = ({
     fallbackTemp: currentTemp,
     fallbackFeelsLike: feelsLikeTemp,
   });
+
+  const handleExplainRisk = async () => {
+    setIsExplainingRisk(true);
+    setExplanationError(null);
+    try {
+      const explanation = await explainHeatRisk({
+        location: `${selectedCity.name}${selectedCity.state ? `, ${selectedCity.state}` : ''}`,
+        temperature: currentTemp,
+        humidity,
+        apparentTemperature: feelsLikeTemp,
+        wind: windSpeed,
+        uv: uvIndex,
+        heatStressScore: details.score,
+        riskLevel: details.label,
+        peakHeatPeriod: selectedCity.peakDangerWindow,
+      });
+      setRiskExplanation(explanation);
+    } catch (error) {
+      setExplanationError(error instanceof Error ? error.message : "Could not explain today's heat risk");
+    } finally {
+      setIsExplainingRisk(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col justify-between selection:bg-amber-100 selection:text-amber-900">
@@ -233,6 +297,30 @@ export const Home: React.FC<HomeProps> = ({
             <span className="text-stone-300">•</span>
             <span>Feels like {feelsLikeTemp}°C</span>
           </div>
+
+          <div className="mt-5 w-full max-w-sm border-t border-stone-100 pt-4">
+            <p className="text-xs text-stone-500 mb-2">Want to understand today's heat?</p>
+            <button
+              id="explain-risk-btn"
+              type="button"
+              onClick={handleExplainRisk}
+              disabled={isExplainingRisk}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-700 transition-colors hover:border-stone-400 hover:text-stone-950 disabled:cursor-wait disabled:opacity-60"
+            >
+              <Sparkles className={`w-3.5 h-3.5 ${isExplainingRisk ? 'animate-pulse' : ''}`} aria-hidden="true" />
+              {isExplainingRisk ? 'Explaining...' : "Explain today's risk"}
+            </button>
+            {riskExplanation && (
+              <p className="mt-3 text-left text-sm leading-relaxed text-stone-700" aria-live="polite">
+                {riskExplanation}
+              </p>
+            )}
+            {explanationError && (
+              <p className="mt-2 text-xs text-stone-500" role="status">
+                {explanationError}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Educational indicator notice */}
@@ -267,22 +355,44 @@ export const Home: React.FC<HomeProps> = ({
           fallbackUvIndex={uvIndex}
         />
 
-        {/* WHAT SHOULD I DO? */}
+        {/* WHO ARE YOU? */}
         <section className="w-full mt-12 sm:mt-16">
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-950 mb-5 sm:mb-6">
-            What should I do?
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-950 mb-2">
+            Who are you?
           </h2>
+          <p className="text-sm text-stone-500 mb-5 sm:mb-6">
+            Choose a profile for more relevant recommendations.
+          </p>
 
-          {/* 3-4 Concise Actions */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
+            {profileOptions.map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setProfile(id)}
+                aria-pressed={profile === id}
+                title={label}
+                className={`inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors cursor-pointer ${
+                  profile === id
+                    ? 'bg-stone-900 text-white border-stone-900'
+                    : 'bg-white text-stone-700 border-stone-200 hover:border-stone-400'
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+
           <div className="space-y-3">
-            {details.actions.map((action, index) => (
+            {profileAdvice[profile].map((advice) => (
               <div
-                key={index}
+                key={advice}
                 className="bg-white rounded-2xl border border-stone-200/80 p-4 sm:p-5 flex items-center gap-3.5 sm:gap-4 text-left shadow-2xs hover:border-stone-300 transition-colors"
               >
-                <span className="text-2xl sm:text-3xl shrink-0 select-none">{action.emoji}</span>
+                <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" aria-hidden="true" />
                 <span className="text-stone-900 text-base sm:text-lg font-medium">
-                  {action.text}
+                  {advice}
                 </span>
               </div>
             ))}
