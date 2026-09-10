@@ -1,6 +1,6 @@
 {
   "name": "HEATSAFE",
-  "description": "Know the heat. Protect yourself. An easy-to-understand extreme heat early-warning and human heat-stress awareness website.",
+  "description": "HeatSafe is a simple heat-risk awareness and safety guidance app for India.",
   "requestFramePermissions": [
     "geolocation"
   ],

@@ -31,14 +31,14 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="sticky top-0 z-40 bg-stone-50/95 backdrop-blur-sm border-b border-stone-200/80">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between gap-3">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 min-h-18 py-2 flex flex-wrap items-center justify-between gap-3">
         {/* Brand */}
         <button
           id="nav-brand-btn"
           onClick={() => onNavigate('home')}
           className="text-left flex items-center gap-3 group focus:outline-hidden cursor-pointer"
         >
-          <div className="w-10 h-10 rounded-xl bg-stone-900 text-amber-400 flex items-center justify-center shadow-xs transition-transform group-hover:scale-105">
+          <div className="w-10 h-10 rounded-xl heatsafe-brand-gradient text-amber-400 flex items-center justify-center shadow-xs transition-transform group-hover:scale-105">
             <ShieldAlert className="w-5 h-5 text-amber-400" />
           </div>
           <div>
@@ -57,7 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </button>
 
         {/* Navigation Links */}
-        <nav className="flex items-center gap-1 sm:gap-2">
+        <nav className="order-3 flex w-full items-center justify-center gap-1 sm:order-none sm:w-auto sm:justify-end sm:gap-2">
           <button
             id="nav-home-btn"
             onClick={() => onNavigate('home')}

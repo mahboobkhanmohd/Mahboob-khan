@@ -263,6 +263,20 @@ function getVerdictDetails(
  * Result is strictly clamped between 0 and 100.
  */
 export function calculateThermalStress(inputs: ThermalStressInputs): ThermalStressResult {
+  if (
+    !Number.isFinite(inputs.temperature) ||
+    !Number.isFinite(inputs.relativeHumidity) ||
+    !Number.isFinite(inputs.apparentTemperature) ||
+    !Number.isFinite(inputs.windSpeed) ||
+    !Number.isFinite(inputs.uvIndex) ||
+    inputs.relativeHumidity < 0 ||
+    inputs.relativeHumidity > 100 ||
+    inputs.windSpeed < 0 ||
+    inputs.uvIndex < 0
+  ) {
+    throw new Error('Invalid thermal stress inputs');
+  }
+
   // If ambient and feels-like temperatures are cold (<= 15°C), heat stress is naturally 0
   if (inputs.temperature <= 15 && inputs.apparentTemperature <= 15) {
     return {

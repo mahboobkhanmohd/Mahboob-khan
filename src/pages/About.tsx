@@ -1,181 +1,107 @@
-import React from 'react';
-import { ShieldAlert, AlertTriangle, HeartPulse, CheckCircle2, PhoneCall, HelpCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, CloudSun, Droplets, Sun, Thermometer, Wind } from 'lucide-react';
+
+const scoreFactors = [
+  { label: 'Temperature', Icon: Thermometer },
+  { label: 'Humidity', Icon: Droplets },
+  { label: 'Feels-like temperature', Icon: CloudSun },
+  { label: 'Wind', Icon: Wind },
+  { label: 'UV exposure', Icon: Sun },
+];
 
 export const About: React.FC = () => {
+  const [showCalculation, setShowCalculation] = useState(false);
+
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-10">
-      {/* Intro Header */}
-      <div className="border-b border-stone-200 pb-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-stone-200/70 text-stone-700 text-xs font-semibold uppercase tracking-wider mb-3">
-          Smart India Hackathon Project
-        </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-stone-900 leading-tight">
-          About HEATSAFE
+    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <div className="mb-10">
+        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-stone-900">
+          Understanding heat risk
         </h1>
-        <p className="text-lg text-stone-600 mt-2 font-normal">
-          "Know the heat. Protect yourself." — Extreme heat early-warning designed for ordinary people, elderly citizens, and community workers.
+        <p className="mt-3 text-base leading-relaxed text-stone-600">
+          HeatSafe turns a few weather conditions into a simple way to understand today&apos;s heat.
         </p>
       </div>
 
-      {/* Core Mission */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-bold text-stone-900 tracking-tight flex items-center gap-2">
-          <ShieldAlert className="w-5 h-5 text-amber-500" />
-          <span>The Core Problem</span>
-        </h2>
-        <p className="text-stone-700 text-base leading-relaxed">
-          Traditional weather apps show 25 different complicated meteorological numbers: barometric pressure, dew point, UV index, wind gusts, and cloud cover percentages. For an elderly grandparent planning their grocery walk, or an outdoor construction laborer, this information is confusing and unhelpful.
-        </p>
-        <p className="text-stone-700 text-base leading-relaxed">
-          <strong className="font-semibold text-stone-900">HEATSAFE</strong> strips away the engineering jargon to answer one single life-or-death question in under 5 seconds:
-          <span className="block mt-2 text-lg font-bold text-stone-900 bg-stone-100 p-3 rounded-xl border border-stone-200">
-            "Is it safe for me to be outside right now?"
-          </span>
-        </p>
-      </section>
+      <div className="space-y-9">
+        <section>
+          <h2 className="text-sm font-bold tracking-widest text-stone-500">WHAT IS A HEATWAVE?</h2>
+          <p className="mt-2 text-lg leading-relaxed text-stone-800">
+            An extended period of unusually hot weather.
+          </p>
+        </section>
 
-      {/* Why Feels-Like & Humidity Matter */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-bold text-stone-900 tracking-tight flex items-center gap-2">
-          <HelpCircle className="w-5 h-5 text-stone-700" />
-          <span>Deterministic Thermal Stress Engine</span>
-        </h2>
-        <p className="text-stone-700 text-base leading-relaxed">
-          The human body cools itself primarily through <strong className="text-stone-900">sweat evaporation</strong>. When ambient humidity is high, sweat cannot evaporate efficiently into the air. This causes heat to build up inside the body even when standard thermometers show moderate readings.
-        </p>
-        <p className="text-stone-700 text-base leading-relaxed">
-          HEATSAFE calculates an experimental, deterministic <strong className="text-stone-900">Heat Stress Score (0–100)</strong> using a transparent weighted formula:
-        </p>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center text-xs">
-          <div className="p-3 bg-stone-100 rounded-xl border border-stone-200">
-            <div className="font-black text-stone-900 text-base">40%</div>
-            <div className="text-stone-600 mt-0.5">Temperature</div>
-          </div>
-          <div className="p-3 bg-stone-100 rounded-xl border border-stone-200">
-            <div className="font-black text-stone-900 text-base">25%</div>
-            <div className="text-stone-600 mt-0.5">Humidity</div>
-          </div>
-          <div className="p-3 bg-stone-100 rounded-xl border border-stone-200">
-            <div className="font-black text-stone-900 text-base">20%</div>
-            <div className="text-stone-600 mt-0.5">Apparent Temp</div>
-          </div>
-          <div className="p-3 bg-stone-100 rounded-xl border border-stone-200">
-            <div className="font-black text-stone-900 text-base">10%</div>
-            <div className="text-stone-600 mt-0.5">UV Index</div>
-          </div>
-          <div className="p-3 bg-stone-100 rounded-xl border border-stone-200">
-            <div className="font-black text-stone-900 text-base">5%</div>
-            <div className="text-stone-600 mt-0.5">Wind Cooling</div>
-          </div>
-        </div>
-        <p className="text-xs text-stone-500 italic">
-          Disclaimer: This is an experimental educational indicator designed to raise heat health awareness. It is not an official government index. No AI model is used in computing this score; it is strictly deterministic.
-        </p>
-      </section>
+        <section>
+          <h2 className="text-sm font-bold tracking-widest text-stone-500">WHAT IS HEAT STRESS?</h2>
+          <p className="mt-2 text-lg leading-relaxed text-stone-800">
+            When your body has difficulty cooling itself because of high heat and environmental conditions.
+          </p>
+        </section>
 
-      {/* Critical Medical Difference: Heat Exhaustion vs Heat Stroke */}
-      <section className="space-y-4">
-        <h2 className="text-xl font-bold text-stone-900 tracking-tight flex items-center gap-2">
-          <HeartPulse className="w-5 h-5 text-rose-600" />
-          <span>Know the Warning Signs: Heat Exhaustion vs Heat Stroke</span>
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-          {/* Heat Exhaustion Card */}
-          <div className="p-5 rounded-xl border border-amber-200 bg-amber-50/50">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-bold text-amber-900 text-base">Heat Exhaustion</h3>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-amber-200 text-amber-900">
-                Move to shade & cool down
-              </span>
+        <section>
+          <h2 className="text-sm font-bold tracking-widest text-stone-500">HOW DOES HEATSAFE WORK?</h2>
+          <div className="mt-4 overflow-hidden rounded-xl border border-stone-200 bg-white shadow-2xs">
+            {['Weather data', 'Heat analysis', 'Heat Stress Score', 'Simple warning', 'Safety guidance'].map(
+              (step, index, steps) => (
+                <React.Fragment key={step}>
+                  <div className="px-5 py-3.5 text-base font-semibold text-stone-900">{step}</div>
+                  {index < steps.length - 1 && (
+                    <div className="px-5 text-sm text-stone-400" aria-hidden="true">↓</div>
+                  )}
+                </React.Fragment>
+              )
+            )}
+          </div>
+        </section>
+
+        <section className="border-t border-stone-200 pt-6">
+          <button
+            type="button"
+            onClick={() => setShowCalculation(!showCalculation)}
+            aria-expanded={showCalculation}
+            className="flex w-full items-center justify-between text-left cursor-pointer"
+          >
+            <span className="text-lg font-bold text-stone-900">How is the score calculated?</span>
+            <ChevronDown
+              className={`h-5 w-5 text-stone-500 transition-transform ${showCalculation ? 'rotate-180' : ''}`}
+              aria-hidden="true"
+            />
+          </button>
+
+          {showCalculation && (
+            <div className="mt-4 rounded-xl bg-stone-100 p-4 sm:p-5">
+              <p className="text-sm leading-relaxed text-stone-700">
+                HeatSafe combines these conditions into an experimental 0–100 indicator:
+              </p>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {scoreFactors.map(({ label, Icon }) => (
+                  <div key={label} className="flex items-center gap-2 rounded-lg bg-white px-3 py-2.5 text-sm text-stone-800">
+                    <Icon className="h-4 w-4 text-amber-600" aria-hidden="true" />
+                    <span>{label}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-stone-600">
+                The score is an educational indicator. It does not replace official warnings or medical advice.
+              </p>
             </div>
-            <ul className="space-y-2 text-sm text-stone-700 mt-3">
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <span>Heavy, profuse sweating</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <span>Cold, pale, or clammy skin</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <span>Fast, weak pulse</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <span>Nausea, vomiting, or muscle cramps</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <span>Dizziness and weakness</span>
-              </li>
-            </ul>
-          </div>
+          )}
+        </section>
 
-          {/* Heat Stroke Card */}
-          <div className="p-5 rounded-xl border border-rose-200 bg-rose-50/50">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-bold text-rose-900 text-base">Heat Stroke (Medical Emergency)</h3>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded bg-rose-200 text-rose-900">
-                Call 108 Immediately
-              </span>
-            </div>
-            <ul className="space-y-2 text-sm text-stone-700 mt-3">
-              <li className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                <span>Extremely high body temperature (above 103°F / 39.5°C)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                <span>Hot, red, dry or damp skin with <strong>NO sweating</strong></span>
-              </li>
-              <li className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                <span>Rapid, strong, pounding pulse</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                <span>Confusion, slurred speech, or delirium</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-                <span>Loss of consciousness or seizures</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
+        <section className="rounded-xl border border-amber-200 bg-amber-50/70 p-5">
+          <p className="text-sm leading-relaxed text-amber-950">
+            HeatSafe is an educational research prototype.<br />
+            It does not replace official government heatwave warnings<br className="hidden sm:block" />
+            or medical advice.
+          </p>
+        </section>
 
-      {/* Emergency Helpline Section */}
-      <section className="p-6 rounded-2xl bg-stone-900 text-stone-100 space-y-4">
-        <h2 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-          <PhoneCall className="w-5 h-5 text-amber-400" />
-          <span>India Emergency Numbers & Public Services</span>
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-          <div className="p-3.5 rounded-xl bg-stone-800/90 border border-stone-700">
-            <div className="text-2xl font-black text-amber-400">108</div>
-            <div className="text-xs font-semibold text-white mt-0.5">Ambulance Service</div>
-            <p className="text-[11px] text-stone-400 mt-1">
-              For acute heat stroke, unconsciousness, or severe heat illness.
-            </p>
-          </div>
-          <div className="p-3.5 rounded-xl bg-stone-800/90 border border-stone-700">
-            <div className="text-2xl font-black text-amber-400">112</div>
-            <div className="text-xs font-semibold text-white mt-0.5">National All-in-One Helpline</div>
-            <p className="text-[11px] text-stone-400 mt-1">
-              Integrated emergency response throughout all Indian states.
-            </p>
-          </div>
-          <div className="p-3.5 rounded-xl bg-stone-800/90 border border-stone-700">
-            <div className="text-2xl font-black text-amber-400">1070</div>
-            <div className="text-xs font-semibold text-white mt-0.5">Disaster Management Relief</div>
-            <p className="text-[11px] text-stone-400 mt-1">
-              State-level emergency relief and severe weather advisories.
-            </p>
-          </div>
-        </div>
-      </section>
+        <section className="border-t border-stone-200 pt-6 text-sm text-stone-600">
+          <h2 className="font-bold text-stone-900">Data sources</h2>
+          <p className="mt-2">Weather: Open-Meteo</p>
+          <p className="mt-1">Map: OpenStreetMap</p>
+        </section>
+      </div>
     </div>
   );
 };

@@ -74,32 +74,36 @@ export function useHeatData() {
   const [dataSource, setDataSource] = useState<'live' | 'standard'>('standard');
 
   const cityRef = useRef(selectedCity);
+  const requestIdRef = useRef(0);
   cityRef.current = selectedCity;
 
   const loadCityData = useCallback(async (city: CityHeatInfo) => {
+    const requestId = ++requestIdRef.current;
     setIsLoading(true);
     setError(null);
+    setWeatherData(null);
     try {
       const result = await fetchLiveHeatData(city);
+      if (requestId !== requestIdRef.current) return;
       setSelectedCity(result.city);
       setHourlyForecast(result.hourly);
       setWeatherData(result.weather);
 
       if (result.error) {
-        setError(result.error);
+        setError('Weather data is temporarily unavailable. Showing estimated conditions.');
         setDataSource('standard');
       } else {
         setError(null);
         setDataSource('live');
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to fetch weather data';
-      setError(msg);
+      if (requestId !== requestIdRef.current) return;
+      setError('Weather data is temporarily unavailable. Showing estimated conditions.');
       setDataSource('standard');
       // Gracefully fall back to local mock data
       setWeatherData(getFallbackWeatherData(city));
     } finally {
-      setIsLoading(false);
+      if (requestId === requestIdRef.current) setIsLoading(false);
     }
   }, []);
 

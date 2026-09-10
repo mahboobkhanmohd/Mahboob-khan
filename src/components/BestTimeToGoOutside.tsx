@@ -44,23 +44,20 @@ export const BestTimeToGoOutside: React.FC<BestTimeToGoOutsideProps> = ({
         <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
           Best time to go outside
         </h2>
-        <span className="text-xs font-medium text-stone-500">Today's Guide</span>
+        <span className="text-xs font-medium text-stone-400">Today</span>
       </div>
 
-      <div className="bg-white rounded-2xl border border-stone-200/80 p-5 sm:p-6 shadow-2xs">
+      <div className="bg-stone-100/70 rounded-xl border border-stone-200 p-4 sm:p-5">
         {/* AUTOMATICALLY GENERATED RECOMMENDATION */}
         <div
           id="outdoor-recommendation-banner"
-          className={`rounded-2xl p-4 sm:p-5 border transition-all mb-6 ${
+          className={`rounded-lg p-4 border transition-all mb-5 ${
             advisory.isAllSafe
               ? 'bg-emerald-50/70 border-emerald-200/90 text-emerald-950'
               : 'bg-stone-900 border-stone-800 text-stone-100'
           }`}
         >
           <div className="flex items-start gap-3.5 sm:gap-4">
-            <span className="text-2xl sm:text-3xl shrink-0 mt-0.5 select-none">
-              {advisory.isAllSafe ? '🌿' : '☀️'}
-            </span>
             <div className="space-y-1">
               <div
                 className={`text-[11px] font-bold uppercase tracking-wider ${
@@ -90,9 +87,7 @@ export const BestTimeToGoOutside: React.FC<BestTimeToGoOutsideProps> = ({
 
         {/* SIMPLE TIMELINE: Morning, Afternoon, Evening */}
         <div className="mb-2">
-          <div className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-3 px-1">
-            Timeline
-          </div>
+          <div className="text-xs font-semibold text-stone-500 mb-3 px-1">Through the day</div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             {advisory.periods.map((period) => {
               const isRed = period.indicator === '🔴';
@@ -100,7 +95,7 @@ export const BestTimeToGoOutside: React.FC<BestTimeToGoOutsideProps> = ({
                 <div
                   key={period.name}
                   id={`period-${period.name.toLowerCase()}`}
-                  className={`rounded-2xl p-4 sm:p-5 border transition-all flex flex-col justify-between select-none ${
+                  className={`rounded-lg p-3.5 border transition-all flex flex-col justify-between select-none ${
                     isRed
                       ? 'bg-rose-50/40 border-rose-200/80 shadow-2xs'
                       : 'bg-stone-50/70 border-stone-200/70'
@@ -112,9 +107,6 @@ export const BestTimeToGoOutside: React.FC<BestTimeToGoOutsideProps> = ({
                       <h3 className="text-base sm:text-lg font-bold text-stone-900">
                         {period.name}
                       </h3>
-                      <span className="text-2xl sm:text-3xl leading-none">
-                        {period.indicator}
-                      </span>
                     </div>
                     <div className="text-xs font-medium text-stone-500 mt-1">
                       {period.timeRange}

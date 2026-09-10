@@ -10,6 +10,17 @@ interface HeatMapLeafletProps {
   onViewAdvisory: (city: CityHeatInfo) => void;
 }
 
+function escapeHtml(value: string): string {
+  const entities: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;',
+  };
+  return value.replace(/[&<>'"]/g, (character) => entities[character]);
+}
+
 export function getRiskMarkerMeta(city: CityHeatInfo) {
   const thermalStress = calculateThermalStress({
     temperature: city.currentTemp,
@@ -93,12 +104,13 @@ export const HeatMapLeaflet: React.FC<HeatMapLeafletProps> = ({
         minZoom: 4,
         maxZoom: 14,
         zoomControl: false,
-        attributionControl: false,
+        attributionControl: true,
       });
 
       // Add OpenStreetMap standard tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 18,
+        attribution: '&copy; OpenStreetMap contributors',
       }).addTo(map);
 
       // Discreet zoom control at bottom right
@@ -123,6 +135,10 @@ export const HeatMapLeaflet: React.FC<HeatMapLeafletProps> = ({
     plotCities.forEach((city) => {
       const meta = getRiskMarkerMeta(city);
       const isSelected = city.id === selectedCity.id;
+      const popupCityName = escapeHtml(city.name);
+      const popupState = escapeHtml(city.state);
+      const popupAdvice = escapeHtml(meta.advice);
+      const popupCityId = escapeHtml(city.id);
 
       // Clean simple risk marker with temperature
       const size = isSelected ? 34 : 26;
@@ -180,10 +196,10 @@ export const HeatMapLeaflet: React.FC<HeatMapLeafletProps> = ({
       const popupHtml = `
         <div style="font-family: system-ui, -apple-system, sans-serif; padding: 2px; min-width: 175px; text-align: left;">
           <div style="font-size: 15px; font-weight: 700; color: #1c1917; line-height: 1.2;">
-            ${city.name}
+            ${popupCityName}
           </div>
           <div style="font-size: 11px; color: #78716c; margin-bottom: 8px;">
-            ${city.state}
+            ${popupState}
           </div>
 
           <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px;">
@@ -217,11 +233,11 @@ export const HeatMapLeaflet: React.FC<HeatMapLeafletProps> = ({
           </div>
 
           <div style="font-size: 11px; color: #44403c; font-style: italic; margin-bottom: 10px; line-height: 1.35;">
-            "${meta.advice}"
+            "${popupAdvice}"
           </div>
 
           <button
-            id="popup-btn-${city.id}"
+            id="popup-btn-${popupCityId}"
             style="
               width: 100%;
               padding: 6px 10px;
@@ -260,6 +276,14 @@ export const HeatMapLeaflet: React.FC<HeatMapLeafletProps> = ({
       markersRef.current[city.id] = marker;
     });
   }, [cities, selectedCity, onSelectCity, onViewAdvisory]);
+
+  useEffect(() => {
+    return () => {
+      mapInstanceRef.current?.remove();
+      mapInstanceRef.current = null;
+      markersRef.current = {};
+    };
+  }, []);
 
   return (
     <div className="relative w-full h-[540px] sm:h-[600px] rounded-2xl overflow-hidden border border-stone-200 shadow-2xs">

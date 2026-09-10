@@ -11,16 +11,23 @@ export interface HeatRiskExplanationInput {
 }
 
 export async function explainHeatRisk(input: HeatRiskExplanationInput): Promise<string> {
-  const response = await fetch('/api/explain-risk', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
+  try {
+    const response = await fetch('/api/explain-risk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(input),
+    });
 
-  const data = (await response.json()) as { explanation?: string; error?: string };
-  if (!response.ok || !data.explanation) {
-    throw new Error(data.error || "Could not explain today's heat risk");
+    const data = (await response.json()) as { explanation?: string; error?: string };
+    if (!response.ok || !data.explanation) {
+      throw new Error(data.error || "Could not explain today's heat risk");
+    }
+
+    return data.explanation;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('temporarily unavailable')) {
+      throw error;
+    }
+    throw new Error("Today's explanation is temporarily unavailable.");
   }
-
-  return data.explanation;
 }

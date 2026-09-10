@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { HeatMapLeaflet } from '../components/HeatMapLeaflet';
+import { IndiaHeatOverview } from '../components/IndiaHeatOverview';
 import { CityHeatInfo } from '../types/heat';
-import { ArrowLeft, MapPin, ArrowRight, Search, Filter, X } from 'lucide-react';
+import { ArrowLeft, Search, Filter, X } from 'lucide-react';
 import { getRiskMeta } from '../utils/heatIndex';
 import { ALL_INDIAN_STATES_AND_UTS } from '../data/indiaLocations';
 
@@ -38,48 +39,20 @@ export const HeatMap: React.FC<HeatMapPageProps> = ({
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
         <div>
           <button
             onClick={onBackToHome}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-stone-900 mb-2 transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Safety Advisory</span>
+            <span>Back to advisory</span>
           </button>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">
-            National Heat Stress Map
-          </h1>
-          <p className="text-sm text-stone-600 mt-1">
-            Real-time thermal risk zones and human heat stress levels across all Indian states and districts.
-          </p>
-        </div>
-
-        {/* Selected City Quick Info Card */}
-        <div className="flex items-center gap-3 p-3 rounded-xl border border-stone-200 bg-white shadow-2xs">
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1 text-xs text-stone-500 font-medium">
-              <MapPin className="w-3.5 h-3.5" />
-              <span>Selected District</span>
-            </div>
-            <span className="font-bold text-stone-900 text-sm">{selectedCity.name}</span>
-          </div>
-          <div className="h-7 w-px bg-stone-200" />
-          <div className="flex flex-col">
-            <span className="text-xs text-stone-500">Feels Like</span>
-            <span className="font-extrabold text-stone-900 text-sm">
-              {selectedCity.feelsLikeTemp}°C
-            </span>
-          </div>
-          <button
-            onClick={() => onViewAdvisory(selectedCity)}
-            className="ml-1 px-3 py-1.5 rounded-lg bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-          >
-            <span>Full Report</span>
-            <ArrowRight className="w-3 h-3" />
-          </button>
+          <h1 className="sr-only">Heat across India</h1>
         </div>
       </div>
+
+      <IndiaHeatOverview cities={cities} onSelectCity={onSelectCity} />
 
       {/* Filter and Search Bar for Map */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 p-3 rounded-xl bg-white border border-stone-200 shadow-2xs">
@@ -165,7 +138,16 @@ export const HeatMap: React.FC<HeatMapPageProps> = ({
                   key={city.id}
                   id={`city-card-${city.id}`}
                   onClick={() => onSelectCity(city)}
-                  className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      onSelectCity(city);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Select ${city.name}, ${city.state}`}
+                  className={`p-4 rounded-xl border text-left transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-amber-600 ${
                     isSelected
                       ? 'border-stone-900 bg-stone-50 ring-1 ring-stone-900'
                       : 'border-stone-200 bg-white hover:border-stone-300'
@@ -195,15 +177,7 @@ export const HeatMap: React.FC<HeatMapPageProps> = ({
                     <div className="text-xs text-stone-500">
                       Feels like <span className="font-bold text-stone-900 text-sm">{city.feelsLikeTemp}°C</span>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onViewAdvisory(city);
-                      }}
-                      className="text-xs font-semibold text-stone-900 hover:text-amber-600 transition-colors cursor-pointer"
-                    >
-                      View advice →
-                    </button>
+                    <span className="text-xs font-semibold text-stone-500">Select location</span>
                   </div>
                 </div>
               );

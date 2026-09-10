@@ -32,7 +32,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col justify-between selection:bg-amber-100 selection:text-amber-900">
+    <div className="min-h-screen heatsafe-page-background flex flex-col justify-between selection:bg-amber-100 selection:text-amber-900">
       <div>
         {/* Navigation Bar for secondary views (Heat Map and About) */}
         {currentPage !== 'home' && (

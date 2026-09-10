@@ -159,7 +159,14 @@ export async function searchCitiesWithOpenMeteo(query: string): Promise<Geocoded
     }
 
     // Map to clean GeocodedCity objects
-    const results: GeocodedCity[] = data.results.map((item: any, idx: number) => {
+    const results: GeocodedCity[] = data.results
+      .filter(
+        (item: any) =>
+          item.country_code?.toLowerCase() === 'in' &&
+          Number.isFinite(item.latitude) &&
+          Number.isFinite(item.longitude)
+      )
+      .map((item: any, idx: number) => {
       const state = item.admin1 || item.admin2 || '';
       const country = item.country || 'India';
       return {
@@ -170,14 +177,7 @@ export async function searchCitiesWithOpenMeteo(query: string): Promise<Geocoded
         latitude: item.latitude,
         longitude: item.longitude,
       };
-    });
-
-    // If searching, prioritize Indian cities first for local relevance
-    results.sort((a, b) => {
-      const aIsIndia = a.country.toLowerCase() === 'india' ? -1 : 1;
-      const bIsIndia = b.country.toLowerCase() === 'india' ? -1 : 1;
-      return aIsIndia - bIsIndia;
-    });
+      });
 
     return results;
   } catch {
@@ -229,22 +229,11 @@ export async function reverseGeocodeCoordinates(
     // Silently fall through to fallback
   }
 
-  // Fallback: match closest known city in India
-  let closest = DEFAULT_SEARCH_CITIES[0];
-  let minDiff = Infinity;
-  for (const c of DEFAULT_SEARCH_CITIES) {
-    const diff = Math.pow(c.latitude - latitude, 2) + Math.pow(c.longitude - longitude, 2);
-    if (diff < minDiff) {
-      minDiff = diff;
-      closest = c;
-    }
-  }
-
   return {
     id: `geo-${latitude.toFixed(4)}-${longitude.toFixed(4)}`,
-    name: closest.name,
-    state: closest.state,
-    country: closest.country,
+    name: 'Current Location',
+    state: 'India',
+    country: 'India',
     latitude,
     longitude,
   };

@@ -28,18 +28,32 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
   const [locationError, setLocationError] = useState<string | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
+  const searchRequestRef = useRef(0);
 
   // Auto-focus search input when opened
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => {
+      previouslyFocusedElementRef.current = document.activeElement as HTMLElement;
+      const focusTimer = window.setTimeout(() => {
         inputRef.current?.focus();
       }, 50);
       setLocationError(null);
+      return () => window.clearTimeout(focusTimer);
     } else {
       setSearchQuery('');
       setResults(DEFAULT_SEARCH_CITIES);
+      previouslyFocusedElementRef.current?.focus();
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
   }, [isOpen]);
 
   // Handle escape key
@@ -56,6 +70,7 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
   // Perform geocoding search with debounce
   useEffect(() => {
     const trimmed = searchQuery.trim();
+    const requestId = ++searchRequestRef.current;
     if (!trimmed) {
       setResults(DEFAULT_SEARCH_CITIES);
       setIsSearching(false);
@@ -66,11 +81,13 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
     const timer = setTimeout(async () => {
       try {
         const list = await searchCitiesWithOpenMeteo(trimmed);
+        if (requestId !== searchRequestRef.current) return;
         setResults(list);
       } catch {
+        if (requestId !== searchRequestRef.current) return;
         setResults([]);
       } finally {
-        setIsSearching(false);
+        if (requestId === searchRequestRef.current) setIsSearching(false);
       }
     }, 280);
 
@@ -151,7 +168,7 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label="Location search"
+      aria-labelledby="location-dialog-title"
       className="fixed inset-0 z-50 flex items-start justify-center pt-14 sm:pt-24 px-4 bg-stone-950/40 backdrop-blur-xs animate-in fade-in duration-150"
       onClick={onClose}
     >
@@ -162,9 +179,9 @@ export const LocationSearchModal: React.FC<LocationSearchModalProps> = ({
         {/* Header & Search Input */}
         <div className="p-4 sm:p-5 border-b border-stone-100">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-stone-500">
+            <h2 id="location-dialog-title" className="text-xs font-bold uppercase tracking-wider text-stone-500">
               Location
-            </span>
+            </h2>
             <button
               onClick={onClose}
               className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"

@@ -17,11 +17,18 @@ import { LocationSearchModal } from '../components/LocationSearchModal';
 import { TodaysHeat } from '../components/TodaysHeat';
 import { BestTimeToGoOutside } from '../components/BestTimeToGoOutside';
 import { HeatwaveAlertBanner } from '../components/HeatwaveAlertBanner';
+import { SevenDayForecast } from '../components/SevenDayForecast';
 import { detectHeatwave } from '../utils/heatwaveDetection';
 import { WeatherData, computeHeatRiskVerdict } from '../services/weatherService';
 import { explainHeatRisk } from '../services/riskExplanationService';
 
 type Profile = 'general' | 'worker' | 'farmer' | 'elderly' | 'child' | 'athlete';
+
+function triggerOptionHaptic() {
+  if ('vibrate' in navigator) {
+    navigator.vibrate(8);
+  }
+}
 
 interface HomeProps {
   selectedCity: CityHeatInfo;
@@ -110,19 +117,19 @@ export const Home: React.FC<HomeProps> = ({
       });
       setRiskExplanation(explanation);
     } catch (error) {
-      setExplanationError(error instanceof Error ? error.message : "Could not explain today's heat risk");
+      setExplanationError("Today's explanation is temporarily unavailable.");
     } finally {
       setIsExplainingRisk(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col justify-between selection:bg-amber-100 selection:text-amber-900">
+    <div className="min-h-screen heatsafe-page-background flex flex-col justify-between selection:bg-amber-100 selection:text-amber-900">
       {/* Top Bar: Brand & Discreet Navigation */}
       <header className="w-full max-w-xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 flex items-center justify-between">
         {/* HeatSafe Logo */}
         <div className="flex items-center gap-2.5 select-none">
-          <div className="w-9 h-9 rounded-xl bg-stone-900 text-amber-400 flex items-center justify-center shadow-xs">
+          <div className="w-9 h-9 rounded-xl heatsafe-brand-gradient text-amber-400 flex items-center justify-center shadow-xs">
             <ShieldAlert className="w-5 h-5 text-amber-400" />
           </div>
           <span className="font-extrabold tracking-tight text-xl text-stone-950">
@@ -152,7 +159,7 @@ export const Home: React.FC<HomeProps> = ({
       </header>
 
       {/* Main Content: Single focused column */}
-      <main className="w-full max-w-xl mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col items-center text-center">
+      <div className="w-full max-w-xl mx-auto px-4 sm:px-6 py-8 sm:py-12 flex flex-col items-center text-center">
         {/* Location Section */}
         <div className="flex flex-col items-center mb-6 sm:mb-8">
           <button
@@ -230,31 +237,31 @@ export const Home: React.FC<HomeProps> = ({
         )}
 
         {/* MAIN QUESTION */}
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-wider text-stone-900 uppercase mb-6 sm:mb-8 text-center select-none">
-          HOW SAFE IS IT OUTSIDE?
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-stone-900 mb-5 sm:mb-6 text-center select-none">
+          How safe is it outside?
         </h1>
 
         {/* ONE LARGE CENTRAL RISK SECTION (Visual Centerpiece) */}
         <div
           id="central-risk-card"
-          className={`w-full bg-white rounded-3xl p-8 sm:p-12 border border-stone-200/90 shadow-sm flex flex-col items-center relative overflow-hidden transition-opacity duration-300 ${
+          className={`w-full heatsafe-risk-gradient rounded-2xl p-6 sm:p-9 border border-stone-200 shadow-sm flex flex-col items-center relative overflow-hidden transition-opacity duration-300 ${
             isLoading ? 'opacity-80' : 'opacity-100'
           }`}
         >
           {/* Risk Score Number - Visual Centerpiece */}
-          <div className="text-8xl sm:text-9xl font-black tracking-tighter text-stone-900 tabular-nums leading-none mb-4 sm:mb-5 select-none">
+          <div className="text-7xl sm:text-8xl font-black tracking-tighter text-stone-900 tabular-nums leading-none mb-3 sm:mb-4 select-none">
             {details.score}
           </div>
 
           {/* RISK Badge - Tasteful, minimal accent color */}
           <div
-            className={`inline-flex items-center justify-center px-4 py-1 rounded-full text-xs sm:text-sm font-bold tracking-widest uppercase border ${details.badgeBg} mb-3`}
+            className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase border ${details.badgeBg} mb-3`}
           >
             {details.label}
           </div>
 
           {/* Short Plain-Language Verdict */}
-          <p className="text-stone-700 text-base sm:text-lg font-medium leading-snug max-w-sm text-center">
+          <p className="text-stone-700 text-base font-medium leading-snug max-w-sm text-center">
             "{details.verdict}"
           </p>
 
@@ -290,7 +297,7 @@ export const Home: React.FC<HomeProps> = ({
           </div>
 
           {/* Clean, quiet temperature reference */}
-          <div className="w-full max-w-xs border-t border-stone-100 my-5 sm:my-6" />
+          <div className="w-full max-w-xs border-t border-stone-100 my-4 sm:my-5" />
 
           <div className="flex items-center justify-center gap-2 text-xs sm:text-sm text-stone-500 font-normal">
             <span className="font-semibold text-stone-800">{currentTemp}°C</span>
@@ -298,7 +305,7 @@ export const Home: React.FC<HomeProps> = ({
             <span>Feels like {feelsLikeTemp}°C</span>
           </div>
 
-          <div className="mt-5 w-full max-w-sm border-t border-stone-100 pt-4">
+          <div className="mt-4 w-full max-w-sm border-t border-stone-100 pt-3">
             <p className="text-xs text-stone-500 mb-2">Want to understand today's heat?</p>
             <button
               id="explain-risk-btn"
@@ -328,6 +335,48 @@ export const Home: React.FC<HomeProps> = ({
           Experimental educational indicator • Not an official government index
         </p>
 
+        {/* PRIMARY ACTIONS */}
+        <section className="w-full mt-8 text-left" aria-labelledby="advice-heading">
+          <div className="flex items-baseline justify-between mb-3 px-1">
+            <h2 id="advice-heading" className="text-xl sm:text-2xl font-bold tracking-tight text-stone-950">
+              What should I do?
+            </h2>
+            <span className="text-xs text-stone-400">For today</span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4">
+            {profileOptions.map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  triggerOptionHaptic();
+                  setProfile(id);
+                }}
+                aria-pressed={profile === id}
+                title={label}
+                className={`inline-flex items-center justify-center gap-1.5 px-2.5 py-2.5 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
+                  profile === id
+                    ? 'bg-stone-900 text-white border-stone-900'
+                    : 'bg-white text-stone-700 border-stone-200 hover:border-stone-400'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-2 heatsafe-advice-gradient rounded-xl p-2">
+            {profileAdvice[profile].map((advice) => (
+              <div key={advice} className="bg-white rounded-xl border border-stone-200 p-4 flex items-center gap-3 text-left shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" aria-hidden="true" />
+                <span className="text-stone-900 text-sm sm:text-base font-medium">{advice}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* EARLY-WARNING HEAT ALERT (Rendered ONLY when conditions are unusually hot, calm & actionable) */}
         <HeatwaveAlertBanner alert={heatwaveAlert} />
 
@@ -355,49 +404,7 @@ export const Home: React.FC<HomeProps> = ({
           fallbackUvIndex={uvIndex}
         />
 
-        {/* WHO ARE YOU? */}
-        <section className="w-full mt-12 sm:mt-16">
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-950 mb-2">
-            Who are you?
-          </h2>
-          <p className="text-sm text-stone-500 mb-5 sm:mb-6">
-            Choose a profile for more relevant recommendations.
-          </p>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6">
-            {profileOptions.map(({ id, label, Icon }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setProfile(id)}
-                aria-pressed={profile === id}
-                title={label}
-                className={`inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors cursor-pointer ${
-                  profile === id
-                    ? 'bg-stone-900 text-white border-stone-900'
-                    : 'bg-white text-stone-700 border-stone-200 hover:border-stone-400'
-                }`}
-              >
-                <Icon className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>{label}</span>
-              </button>
-            ))}
-          </div>
-
-          <div className="space-y-3">
-            {profileAdvice[profile].map((advice) => (
-              <div
-                key={advice}
-                className="bg-white rounded-2xl border border-stone-200/80 p-4 sm:p-5 flex items-center gap-3.5 sm:gap-4 text-left shadow-2xs hover:border-stone-300 transition-colors"
-              >
-                <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" aria-hidden="true" />
-                <span className="text-stone-900 text-base sm:text-lg font-medium">
-                  {advice}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
+        <SevenDayForecast forecast={weatherData?.dailyForecast ?? []} />
 
         {/* Location Search Dialog Modal */}
         <LocationSearchModal
@@ -408,7 +415,7 @@ export const Home: React.FC<HomeProps> = ({
             onSelectCityDirect?.(city);
           }}
         />
-      </main>
+      </div>
 
       {/* Clean, quiet bottom area */}
       <footer className="w-full max-w-xl mx-auto px-4 sm:px-6 py-8 text-center text-xs text-stone-400">

@@ -177,7 +177,7 @@ export const TodaysHeat: React.FC<TodaysHeatProps> = ({
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-stone-200/80 p-5 sm:p-6 shadow-2xs">
+      <div className="bg-white rounded-xl border border-stone-200 p-4 sm:p-5 shadow-2xs">
         {/* ONE clean minimal Recharts chart */}
         <div className="h-44 sm:h-48 w-full -ml-2 sm:ml-0">
           <ResponsiveContainer width="100%" height="100%">
@@ -256,49 +256,6 @@ export const TodaysHeat: React.FC<TodaysHeatProps> = ({
           </ResponsiveContainer>
         </div>
 
-        {/* Clean, Scannable Timeline Row: Time, Temperature, Risk Level */}
-        <div className="mt-5 pt-4 border-t border-stone-100">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-            {points.map((p) => {
-              const isSelected = activeHour === p.hour;
-              return (
-                <div
-                  key={p.hour}
-                  onMouseEnter={() => setActiveHour(p.hour)}
-                  onMouseLeave={() => setActiveHour(null)}
-                  className={`p-2.5 rounded-xl border transition-all text-center select-none ${
-                    p.isHighestRisk
-                      ? 'bg-rose-50/50 border-rose-200/90 shadow-2xs'
-                      : isSelected
-                      ? 'bg-stone-100/90 border-stone-300'
-                      : 'bg-stone-50/60 border-stone-200/60 hover:border-stone-300'
-                  }`}
-                >
-                  <div className="text-xs font-semibold text-stone-600">{p.time}</div>
-                  <div className="text-lg font-bold text-stone-900 tabular-nums my-0.5">
-                    {p.temp}°
-                  </div>
-                  <div className="text-xs font-medium flex items-center justify-center gap-1">
-                    <span
-                      className={
-                        p.isHighestRisk
-                          ? 'text-rose-700 font-semibold'
-                          : p.riskLevel === 'High'
-                          ? 'text-amber-800'
-                          : p.riskLevel === 'Moderate'
-                          ? 'text-stone-700'
-                          : 'text-stone-500'
-                      }
-                    >
-                      {p.riskLevel}
-                    </span>
-                    {p.isHighestRisk && <span className="text-xs leading-none">🔴</span>}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
       </div>
     </section>
   );

@@ -6,6 +6,7 @@ import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+  const explanationRequestTimes = new Map<string, number>();
 
   return {
     plugins: [
@@ -15,44 +16,73 @@ export default defineConfig(({ mode }) => {
         name: 'heat-risk-explanation-api',
         configureServer(server) {
           server.middlewares.use('/api/explain-risk', async (request, response) => {
-            if (request.method !== 'POST') {
-              response.statusCode = 405;
+            const sendJson = (status: number, body: Record<string, string>) => {
+              response.statusCode = status;
               response.setHeader('Content-Type', 'application/json');
-              response.end(JSON.stringify({ error: 'Method not allowed' }));
+              response.end(JSON.stringify(body));
+            };
+
+            if (request.method !== 'POST') {
+              sendJson(405, { error: 'This action is not available.' });
               return;
             }
 
+            const clientKey = request.socket.remoteAddress || 'local';
+            const lastRequestAt = explanationRequestTimes.get(clientKey) || 0;
+            if (Date.now() - lastRequestAt < 1500) {
+              sendJson(429, { error: 'Please wait a moment before trying again.' });
+              return;
+            }
+            explanationRequestTimes.set(clientKey, Date.now());
+
             try {
               const chunks: Buffer[] = [];
+              let bodySize = 0;
               for await (const chunk of request) {
-                chunks.push(Buffer.from(chunk));
+                const buffer = Buffer.from(chunk);
+                bodySize += buffer.length;
+                if (bodySize > 16_000) {
+                  sendJson(413, { error: 'The heat data could not be processed.' });
+                  request.destroy();
+                  return;
+                }
+                chunks.push(buffer);
               }
 
               const payload = JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>;
-              const requiredFields = [
+              const requiredStringFields = [
                 'location',
+                'riskLevel',
+                'peakHeatPeriod',
+              ];
+              const requiredNumberFields = [
                 'temperature',
                 'humidity',
                 'apparentTemperature',
                 'wind',
                 'uv',
                 'heatStressScore',
-                'riskLevel',
-                'peakHeatPeriod',
               ];
 
-              if (requiredFields.some((field) => payload[field] === undefined || payload[field] === null)) {
-                response.statusCode = 400;
-                response.setHeader('Content-Type', 'application/json');
-                response.end(JSON.stringify({ error: 'Incomplete heat data' }));
+              if (
+                requiredStringFields.some(
+                  (field) => typeof payload[field] !== 'string' || String(payload[field]).length > 160
+                ) ||
+                requiredNumberFields.some((field) => typeof payload[field] !== 'number' || !Number.isFinite(payload[field])) ||
+                Number(payload.humidity) < 0 ||
+                Number(payload.humidity) > 100 ||
+                Number(payload.uv) < 0 ||
+                Number(payload.uv) > 20 ||
+                Number(payload.heatStressScore) < 0 ||
+                Number(payload.heatStressScore) > 100
+              ) {
+                sendJson(400, { error: 'The heat data could not be processed.' });
                 return;
               }
 
               const apiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
               if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
-                response.statusCode = 503;
-                response.setHeader('Content-Type', 'application/json');
-                response.end(JSON.stringify({ error: 'Gemini is not configured' }));
+                sendJson(503, { error: 'Explanations are temporarily unavailable.' });
                 return;
               }
 
@@ -87,11 +117,10 @@ Peak heat period: ${String(payload.peakHeatPeriod)}`;
               response.end(JSON.stringify({ explanation }));
             } catch (error) {
               console.error('Heat risk explanation failed:', error);
-              response.statusCode = 500;
-              response.setHeader('Content-Type', 'application/json');
-              response.end(JSON.stringify({ error: "Could not explain today's heat risk" }));
+              sendJson(500, { error: "Today's explanation is temporarily unavailable." });
             }
           });
+
         },
       },
     ],

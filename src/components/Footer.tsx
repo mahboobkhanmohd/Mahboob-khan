@@ -8,7 +8,7 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-lg bg-stone-900 text-amber-400 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg heatsafe-brand-gradient text-amber-400 flex items-center justify-center">
                 <ShieldAlert className="w-4 h-4 text-amber-400" />
               </div>
               <span className="font-bold text-stone-900 tracking-tight">HEATSAFE</span>

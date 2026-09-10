@@ -30,8 +30,17 @@ export interface WeatherData {
   hourlyUvIndex: number[];
   dailyMaxTemp: number;
   dailyMinTemp: number;
+  dailyForecast: DailyForecast[];
   isFallback: boolean;
   timestamp: string;
+}
+
+export interface DailyForecast {
+  date: string;
+  dayLabel: string;
+  high: number;
+  low: number;
+  riskLabel: 'High' | 'Moderate' | 'Caution' | 'Safe';
 }
 
 export interface HeatVerdictDetails {
@@ -64,6 +73,9 @@ export interface OpenMeteoResponse {
     time: string[];
     temperature_2m_max: number[];
     temperature_2m_min: number[];
+    relative_humidity_2m_max?: number[];
+    wind_speed_10m_max?: number[];
+    uv_index_max?: number[];
   };
 }
 
@@ -89,6 +101,56 @@ function createTimeoutSignal(timeoutMs: number): AbortSignal | undefined {
   return undefined;
 }
 
+function isFiniteNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
+function hasFiniteNumbers(values: unknown, minimumLength = 1): values is number[] {
+  return Array.isArray(values) && values.length >= minimumLength && values.every(isFiniteNumber);
+}
+
+function getDayLabel(date: Date, index: number): string {
+  if (index === 0) return 'TODAY';
+  return date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
+}
+
+function getForecastRiskLabel(
+  high: number,
+  humidity: number,
+  windSpeed: number,
+  uvIndex: number
+): DailyForecast['riskLabel'] {
+  const risk = computeHeatRiskVerdict(high, high, humidity, windSpeed, uvIndex).label;
+  if (risk === 'EXTREME RISK' || risk === 'HIGH RISK') return 'High';
+  if (risk === 'MODERATE RISK') return 'Moderate';
+  if (risk === 'CAUTION') return 'Caution';
+  return 'Safe';
+}
+
+function createDailyForecast(
+  daily: NonNullable<OpenMeteoResponse['daily']>,
+  fallbackHumidity: number,
+  fallbackWindSpeed: number,
+  fallbackUvIndex: number
+): DailyForecast[] {
+  return daily.time.slice(0, 7).map((dateValue, index) => {
+    const date = new Date(`${dateValue}T12:00:00`);
+    const high = Math.round(daily.temperature_2m_max[index]);
+    const low = Math.round(daily.temperature_2m_min[index]);
+    const humidity = Math.round(daily.relative_humidity_2m_max?.[index] ?? fallbackHumidity);
+    const windSpeed = Math.round(daily.wind_speed_10m_max?.[index] ?? fallbackWindSpeed);
+    const uvIndex = Math.round(daily.uv_index_max?.[index] ?? fallbackUvIndex);
+
+    return {
+      date: dateValue,
+      dayLabel: getDayLabel(date, index),
+      high,
+      low,
+      riskLabel: getForecastRiskLabel(high, humidity, windSpeed, uvIndex),
+    };
+  });
+}
+
 /**
  * Fetches real weather data from Open-Meteo's free weather API.
  * Requests ONLY the exact fields needed by the application.
@@ -97,7 +159,7 @@ export async function fetchWeatherDataFromOpenMeteo(
   lat: number,
   lon: number
 ): Promise<WeatherData> {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,uv_index&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,uv_index&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,uv_index&hourly=temperature_2m,apparent_temperature,relative_humidity_2m,uv_index&daily=temperature_2m_max,temperature_2m_min,relative_humidity_2m_max,wind_speed_10m_max,uv_index_max&timezone=auto&forecast_days=7`;
 
   const signal = createTimeoutSignal(6000);
   const res = await fetch(url, signal ? { signal } : {});
@@ -107,7 +169,22 @@ export async function fetchWeatherDataFromOpenMeteo(
 
   const data: OpenMeteoResponse = await res.json();
 
-  if (!data.current || typeof data.current.temperature_2m !== 'number') {
+  if (
+    !data.current ||
+    !isFiniteNumber(data.current.temperature_2m) ||
+    !isFiniteNumber(data.current.relative_humidity_2m) ||
+    !isFiniteNumber(data.current.apparent_temperature) ||
+    !isFiniteNumber(data.current.wind_speed_10m) ||
+    !isFiniteNumber(data.current.uv_index) ||
+    !data.hourly ||
+    !hasFiniteNumbers(data.hourly.temperature_2m, 6) ||
+    !hasFiniteNumbers(data.hourly.apparent_temperature, 6) ||
+    !hasFiniteNumbers(data.hourly.relative_humidity_2m, 6) ||
+    !data.daily ||
+    !hasFiniteNumbers(data.daily.time.map((value) => Date.parse(`${value}T12:00:00`)), 7) ||
+    !hasFiniteNumbers(data.daily.temperature_2m_max, 7) ||
+    !hasFiniteNumbers(data.daily.temperature_2m_min, 7)
+  ) {
     throw new Error('Incomplete weather payload received from Open-Meteo');
   }
 
@@ -129,7 +206,8 @@ export async function fetchWeatherDataFromOpenMeteo(
   const apparentTemp = Math.round(current.apparent_temperature);
   const humidity = Math.round(current.relative_humidity_2m);
   const windSpeed = Math.round(current.wind_speed_10m ?? 12);
-  const uvIndex = Math.round(current.uv_index ?? 0);
+  const uvIndex = Math.round(current.uv_index);
+  const dailyForecast = createDailyForecast(daily, humidity, windSpeed, uvIndex);
 
   const dailyMax =
     daily.temperature_2m_max && daily.temperature_2m_max.length > 0
@@ -153,6 +231,7 @@ export async function fetchWeatherDataFromOpenMeteo(
     hourlyUvIndex: (hourly.uv_index || []).map((u) => Math.round(u)),
     dailyMaxTemp: dailyMax,
     dailyMinTemp: dailyMin,
+    dailyForecast,
     isFallback: false,
     timestamp: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
   };
@@ -188,6 +267,18 @@ export function getFallbackWeatherData(city: CityHeatInfo): WeatherData {
     return Math.max(0, Math.round(uvIndex * factor));
   });
 
+  const dailyForecast = Array.from({ length: 7 }, (_, index) => {
+    const high = Math.round(curTemp + 2 - index * 0.5);
+    const low = Math.round(curTemp - 6 - index * 0.3);
+    return {
+      date: new Date(Date.now() + index * 86400000).toISOString().slice(0, 10),
+      dayLabel: getDayLabel(new Date(Date.now() + index * 86400000), index),
+      high,
+      low,
+      riskLabel: getForecastRiskLabel(high, humidity, windSpeed, uvIndex),
+    };
+  });
+
   return {
     temperature: curTemp,
     apparentTemperature: apparentTemp,
@@ -200,6 +291,7 @@ export function getFallbackWeatherData(city: CityHeatInfo): WeatherData {
     hourlyUvIndex: hourlyUv,
     dailyMaxTemp: Math.max(curTemp + 2, ...hourlyTemp),
     dailyMinTemp: Math.min(curTemp - 6, ...hourlyTemp),
+    dailyForecast,
     isFallback: true,
     timestamp: 'Offline fallback',
   };
