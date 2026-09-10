@@ -1,0 +1,10 @@
+{
+  "name": "HEATSAFE",
+  "description": "Know the heat. Protect yourself. An easy-to-understand extreme heat early-warning and human heat-stress awareness website.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

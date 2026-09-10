@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+/* Leaflet map pane styling */
+.leaflet-container {
+  font-family: inherit;
+  z-index: 10 !important;
+}
+
+.custom-heat-pin {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Hide scrollbar for clean chip row */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
